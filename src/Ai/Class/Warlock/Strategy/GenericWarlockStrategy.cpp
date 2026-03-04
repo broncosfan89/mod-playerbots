@@ -79,7 +79,7 @@ void GenericWarlockStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
         new TriggerNode(
             "chaos bolt",
             {
-                NextAction("chaos bolt", 17.5f)
+                NextAction("chaos bolt", 18.5f)
             }
         )
     );

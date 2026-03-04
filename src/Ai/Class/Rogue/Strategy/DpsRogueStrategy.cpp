@@ -140,9 +140,17 @@ void DpsRogueStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
 
     triggers.push_back(
         new TriggerNode(
+            "rupture",
+            {
+                NextAction("rupture", ACTION_HIGH + 2)
+            }
+        )
+    );
+
+    triggers.push_back(
+        new TriggerNode(
             "combo points available",
             {
-                NextAction("rupture", ACTION_HIGH + 1),
                 NextAction("eviscerate", ACTION_HIGH)
             }
         )

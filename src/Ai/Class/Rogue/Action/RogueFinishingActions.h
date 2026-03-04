@@ -31,7 +31,33 @@ public:
 class CastRuptureAction : public CastDebuffSpellAction
 {
 public:
-    CastRuptureAction(PlayerbotAI* botAI) : CastDebuffSpellAction(botAI, "rupture", true, 6.0f) {}
+    CastRuptureAction(PlayerbotAI* botAI) : CastDebuffSpellAction(botAI, "rupture", true, 3.0f) {}
+
+    Unit* GetTarget() override
+    {
+        Unit* comboTarget = bot->GetComboTarget();
+        if (comboTarget &&
+            comboTarget->IsAlive() &&
+            bot->GetComboTargetGUID() == comboTarget->GetGUID() &&
+            bot->IsWithinMeleeRange(comboTarget))
+        {
+            return comboTarget;
+        }
+
+        return CastDebuffSpellAction::GetTarget();
+    }
+
+    bool isUseful() override
+    {
+        Unit* target = GetTarget();
+        if (!target)
+            return false;
+
+        if (bot->GetComboPoints(target) < 3)
+            return false;
+
+        return CastDebuffSpellAction::isUseful();
+    }
 };
 
 class CastKidneyShotAction : public CastMeleeSpellAction

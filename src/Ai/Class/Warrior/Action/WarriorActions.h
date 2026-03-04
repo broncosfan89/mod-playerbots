@@ -7,6 +7,7 @@
 #define _PLAYERBOT_WARRIORACTIONS_H
 
 #include "AiObject.h"
+#include "AiObjectContext.h"
 #include "GenericSpellActions.h"
 #include "Player.h"
 #include "PlayerbotAI.h"
@@ -60,7 +61,44 @@ public:
     CastRendOnAttackerAction(PlayerbotAI* botAI) : CastDebuffSpellOnMeleeAttackerAction(botAI, "rend") {}
 };
 
-MELEE_ACTION(CastThunderClapAction, "thunder clap");
+class CastThunderClapAction : public CastMeleeSpellAction
+{
+public:
+    CastThunderClapAction(PlayerbotAI* botAI) : CastMeleeSpellAction(botAI, "thunder clap") {}
+
+    Unit* GetTarget() override
+    {
+        Unit* target = CastMeleeSpellAction::GetTarget();
+        if (target && target->IsAlive() && bot->IsWithinMeleeRange(target))
+            return target;
+
+        Unit* victim = bot->GetVictim();
+        if (victim && victim->IsAlive() && bot->IsWithinMeleeRange(victim))
+            return victim;
+
+        return target;
+    }
+
+    bool isUseful() override
+    {
+        Unit* target = GetTarget();
+        if (!target)
+            return false;
+
+        // Keep Thunder Clap up on primary target, but avoid repeatedly spending rage in pure single target windows.
+        uint8 attackerCount = context->GetValue<uint8>("attacker count")->Get();
+        if (attackerCount < 2)
+        {
+            if (Aura* aura = botAI->GetAura("thunder clap", target, true))
+            {
+                if (aura->GetDuration() > 3000)
+                    return false;
+            }
+        }
+
+        return CastMeleeSpellAction::isUseful();
+    }
+};
 SNARE_ACTION(CastThunderClapSnareAction, "thunder clap");
 SNARE_ACTION(CastHamstringAction, "hamstring");
 MELEE_ACTION(CastOverpowerAction, "overpower");
@@ -108,7 +146,24 @@ SNARE_ACTION(CastTauntOnSnareTargetAction, "taunt");
 BUFF_ACTION(CastBloodrageAction, "bloodrage");
 MELEE_ACTION(CastShieldBashAction, "shield bash");
 ENEMY_HEALER_ACTION(CastShieldBashOnEnemyHealerAction, "shield bash");
-MELEE_ACTION(CastRevengeAction, "revenge");
+class CastRevengeAction : public CastMeleeSpellAction
+{
+public:
+    CastRevengeAction(PlayerbotAI* botAI) : CastMeleeSpellAction(botAI, "revenge") {}
+
+    Unit* GetTarget() override
+    {
+        Unit* target = CastMeleeSpellAction::GetTarget();
+        if (target && target->IsAlive() && bot->IsWithinMeleeRange(target))
+            return target;
+
+        Unit* victim = bot->GetVictim();
+        if (victim && victim->IsAlive() && bot->IsWithinMeleeRange(victim))
+            return victim;
+
+        return target;
+    }
+};
 BUFF_ACTION(CastShieldBlockAction, "shield block");
 DEBUFF_ACTION_U(CastDisarmAction, "disarm",
                 GetTarget() && GetTarget()->IsPlayer() ? !botAI->IsRanged((Player*)GetTarget())

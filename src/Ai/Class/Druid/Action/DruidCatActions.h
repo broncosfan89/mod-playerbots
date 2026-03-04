@@ -82,6 +82,33 @@ class CastRipAction : public CastMeleeDebuffSpellAction
 {
 public:
     CastRipAction(PlayerbotAI* botAI) : CastMeleeDebuffSpellAction(botAI, "rip", true, 1.0f) {}
+
+    Unit* GetTarget() override
+    {
+        Unit* comboTarget = bot->GetComboTarget();
+        if (comboTarget &&
+            comboTarget->IsAlive() &&
+            bot->GetComboTargetGUID() == comboTarget->GetGUID() &&
+            bot->GetComboPoints(comboTarget) > 0 &&
+            bot->IsWithinMeleeRange(comboTarget))
+        {
+            return comboTarget;
+        }
+
+        return CastMeleeDebuffSpellAction::GetTarget();
+    }
+
+    bool isUseful() override
+    {
+        Unit* target = GetTarget();
+        if (!target)
+            return false;
+
+        if (bot->GetComboPoints(target) == 0)
+            return false;
+
+        return CastMeleeDebuffSpellAction::isUseful();
+    }
 };
 
 class CastRipOnMeleeAttackersAction : public CastMeleeDebuffSpellAction

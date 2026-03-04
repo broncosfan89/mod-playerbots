@@ -55,11 +55,11 @@ DestructionWarlockStrategy::DestructionWarlockStrategy(PlayerbotAI* botAI) : Gen
 std::vector<NextAction> DestructionWarlockStrategy::getDefaultActions()
 {
     return {
-       NextAction("shadow bolt", 5.95f),
-       NextAction("immolate", 5.9f),
-       NextAction("conflagrate", 5.8f),
-       NextAction("chaos bolt", 5.7f),
-       NextAction("incinerate", 5.6f),
+       NextAction("immolate", 6.0f),
+       NextAction("conflagrate", 5.95f),
+       NextAction("chaos bolt", 5.9f),
+       NextAction("incinerate", 5.8f),
+       NextAction("shadow bolt", 5.7f),
        NextAction("corruption", 5.3f),
        NextAction("shoot", 5.0f)
     };
@@ -91,7 +91,7 @@ void DestructionWarlockStrategy::InitTriggers(std::vector<TriggerNode*>& trigger
         new TriggerNode(
             "chaos bolt",
             {
-                NextAction("chaos bolt", 19.0f)
+                NextAction("chaos bolt", 19.75f)
             }
         )
     );

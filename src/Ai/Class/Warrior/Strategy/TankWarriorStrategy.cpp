@@ -134,6 +134,7 @@ std::vector<NextAction> TankWarriorStrategy::getDefaultActions()
 {
     return {
         NextAction("revenge", ACTION_DEFAULT + 0.5f),
+        NextAction("thunder clap", ACTION_DEFAULT + 0.4f),
         NextAction("devastate", ACTION_DEFAULT + 0.3f),
         NextAction("demoralizing shout", ACTION_DEFAULT + 0.1f),
         NextAction("melee", ACTION_DEFAULT)
