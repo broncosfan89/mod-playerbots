@@ -129,4 +129,14 @@ void ElementalShamanStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
             }
         )
     );
+
+    // At higher mastery tiers Lava Burst gains AoE value, so keep it in multi-target rotation.
+    triggers.push_back(
+        new TriggerNode(
+            "medium aoe",
+            {
+                NextAction("lava burst", 5.25f)
+            }
+        )
+    );
 }

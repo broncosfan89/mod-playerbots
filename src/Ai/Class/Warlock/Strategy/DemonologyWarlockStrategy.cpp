@@ -59,9 +59,9 @@ DemonologyWarlockStrategy::DemonologyWarlockStrategy(PlayerbotAI* botAI) : Gener
 std::vector<NextAction> DemonologyWarlockStrategy::getDefaultActions()
 {
     return {
+       NextAction("shadow bolt", 5.6f),
        NextAction("corruption", 5.5f),
        NextAction("immolate", 5.4f),
-       NextAction("shadow bolt", 5.3f),
        NextAction("incinerate", 5.2f),
        NextAction("shoot", 5.0f) };
 }
@@ -119,6 +119,14 @@ void DemonologyWarlockStrategy::InitTriggers(std::vector<TriggerNode*>& triggers
             "immolate",
             {
                 NextAction("immolate", 17.5f)
+            }
+        )
+    );
+    triggers.push_back(
+        new TriggerNode(
+            "backlash",
+            {
+                NextAction("shadow bolt", 20.0f)
             }
         )
     );

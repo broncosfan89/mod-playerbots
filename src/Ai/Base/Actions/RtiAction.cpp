@@ -65,6 +65,7 @@ bool MarkRtiAction::Execute(Event event)
         return false;
 
     Unit* target = nullptr;
+    Unit* ccTarget = nullptr;
     GuidVector attackers = botAI->GetAiObjectContext()->GetValue<GuidVector>("attackers")->Get();
     for (ObjectGuid const guid : attackers)
     {
@@ -92,6 +93,13 @@ bool MarkRtiAction::Execute(Event event)
 
         if (!target || target->GetHealth() > unit->GetHealth())
             target = unit;
+
+        // Prefer mana users / humanoids as CC targets.
+        if (unit->getPowerType() == POWER_MANA || unit->GetCreatureType() == CREATURE_TYPE_HUMANOID)
+        {
+            if (!ccTarget || ccTarget == target || ccTarget->GetHealth() < unit->GetHealth())
+                ccTarget = unit;
+        }
     }
 
     if (!target)
@@ -100,5 +108,11 @@ bool MarkRtiAction::Execute(Event event)
     std::string const rti = AI_VALUE(std::string, "rti");
     uint8 index = RtiTargetValue::GetRtiIndex(rti);
     group->SetTargetIcon(index, bot->GetGUID(), target->GetGUID());
+
+    std::string const rtiCc = AI_VALUE(std::string, "rti cc");
+    uint8 ccIndex = RtiTargetValue::GetRtiIndex(rtiCc);
+    if (ccTarget && ccTarget != target && ccIndex < 8)
+        group->SetTargetIcon(ccIndex, bot->GetGUID(), ccTarget->GetGUID());
+
     return true;
 }

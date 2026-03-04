@@ -70,15 +70,13 @@ bool CastShadowflameAction::isUseful()
     return facingTarget && targetClose;
 }
 
-// Checks if the bot knows Seed of Corruption, and prevents the use of Rain of Fire if it does
+// Rain of Fire should remain available as an AoE option even when Seed is known.
 bool CastRainOfFireAction::isUseful()
 {
     Unit* target = GetTarget();
     if (!target)
         return false;
-    if (bot->HasSpell(27243) || bot->HasSpell(47835) || bot->HasSpell(47836)) // Seed of Corruption spell IDs
-        return false;
-    return true;
+    return target->IsAlive();
 }
 
 // Checks if the enemies are close enough to use Hellfire

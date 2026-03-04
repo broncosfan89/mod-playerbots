@@ -167,6 +167,7 @@ public:
         creators["unstable affliction"] = &WarlockTriggerFactoryInternal::unstable_affliction;
         creators["unstable affliction on attacker"] = &WarlockTriggerFactoryInternal::unstable_affliction_on_attacker;
         creators["haunt"] = &WarlockTriggerFactoryInternal::haunt;
+        creators["chaos bolt"] = &WarlockTriggerFactoryInternal::chaos_bolt;
         creators["decimation"] = &WarlockTriggerFactoryInternal::decimation;
         creators["life tap"] = &WarlockTriggerFactoryInternal::life_tap;
         creators["life tap glyph buff"] = &WarlockTriggerFactoryInternal::life_tap_glyph_buff;
@@ -215,6 +216,7 @@ private:
     static Trigger* unstable_affliction(PlayerbotAI* ai) { return new UnstableAfflictionTrigger(ai); }
     static Trigger* unstable_affliction_on_attacker(PlayerbotAI* ai) { return new UnstableAfflictionOnAttackerTrigger(ai); }
     static Trigger* haunt(PlayerbotAI* ai) { return new HauntTrigger(ai); }
+    static Trigger* chaos_bolt(PlayerbotAI* ai) { return new ChaosBoltTrigger(ai); }
     static Trigger* decimation(PlayerbotAI* ai) { return new DecimationTrigger(ai); }
     static Trigger* life_tap(PlayerbotAI* ai) { return new LifeTapTrigger(ai); }
     static Trigger* life_tap_glyph_buff(PlayerbotAI* ai) { return new LifeTapGlyphBuffTrigger(ai); }

@@ -159,6 +159,17 @@ public:
     bool enableBroadcasts;
     bool enableGreet;
     bool randomBotSayWithoutMaster;
+    bool gptChatEnabled;
+    bool gptChatWhisperOnly;
+    uint32 gptChatReplyChance;
+    uint32 gptChatTimeoutMs;
+    uint32 gptChatMaxPromptChars;
+    uint32 gptChatMaxReplyChars;
+    uint32 gptChatMinIntervalSec;
+    std::string gptChatEndpoint;
+    std::string gptChatApiKey;
+    std::string gptChatModel;
+    std::string gptChatSystemPrompt;
 
     uint32 broadcastChanceMaxValue;
 

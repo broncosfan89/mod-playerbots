@@ -22,10 +22,10 @@ void GenericPriestStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode("critical health", { NextAction("desperate prayer",
         ACTION_HIGH + 5) }));
     triggers.push_back(new TriggerNode(
-        "critical health", { NextAction("power word: shield", ACTION_NORMAL) }));
+        "critical health", { NextAction("power word: shield", ACTION_HIGH + 4) }));
 
     triggers.push_back(
-        new TriggerNode("low health", { NextAction("power word: shield", ACTION_HIGH) }));
+        new TriggerNode("low health", { NextAction("power word: shield", ACTION_HIGH + 4) }));
 
     triggers.push_back(
         new TriggerNode("medium mana",
@@ -40,7 +40,7 @@ void GenericPriestStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
                                        { NextAction("flee", ACTION_MOVE + 9) }));
     triggers.push_back(new TriggerNode("often", { NextAction("apply oil", 1.0f) }));
     triggers.push_back(new TriggerNode("being attacked",
-        { NextAction("power word: shield", ACTION_HIGH + 1) }));
+        { NextAction("power word: shield", ACTION_HIGH + 5) }));
     triggers.push_back(new TriggerNode("new pet", { NextAction("set pet stance", 60.0f) }));
 }
 
@@ -79,6 +79,7 @@ void PriestHealerDpsStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
     triggers.push_back(
         new TriggerNode("healer should attack",
                         {
+                            NextAction("penance", ACTION_DEFAULT + 0.6f),
                             NextAction("shadow word: pain", ACTION_DEFAULT + 0.5f),
                             NextAction("holy fire", ACTION_DEFAULT + 0.4f),
                             NextAction("smite", ACTION_DEFAULT + 0.3f),

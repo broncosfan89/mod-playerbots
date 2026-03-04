@@ -6,8 +6,25 @@
 #include "AiFactory.h"
 #include "SayAction.h"
 
+#include <boost/asio/connect.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl/error.hpp>
+#include <boost/asio/ssl/stream.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/version.hpp>
+#include <openssl/ssl.h>
+
+#include <algorithm>
+#include <chrono>
+#include <cctype>
+#include <mutex>
+#include <optional>
 #include <regex>
+#include <sstream>
 #include <string>
+#include <unordered_set>
 
 #include "ChannelMgr.h"
 #include "Event.h"
@@ -53,6 +70,345 @@ static const std::unordered_set<std::string> noReplyMsgs = {
 static const std::unordered_set<std::string> noReplyMsgParts = {
     "+", "-", "@", "follow target", "focus heal", "cast ", "accept [", "e [", "destroy [", "go zone"};
 static const std::unordered_set<std::string> noReplyMsgStarts = {"e ", "accept ", "cast ", "destroy "};
+
+namespace
+{
+struct ParsedEndpoint
+{
+    bool secure = false;
+    std::string host;
+    std::string port;
+    std::string target = "/";
+};
+
+std::string EscapeJson(std::string const& input)
+{
+    std::string output;
+    output.reserve(input.size() + 16);
+    for (char const c : input)
+    {
+        switch (c)
+        {
+            case '\"':
+                output += "\\\"";
+                break;
+            case '\\':
+                output += "\\\\";
+                break;
+            case '\b':
+                output += "\\b";
+                break;
+            case '\f':
+                output += "\\f";
+                break;
+            case '\n':
+                output += "\\n";
+                break;
+            case '\r':
+                output += "\\r";
+                break;
+            case '\t':
+                output += "\\t";
+                break;
+            default:
+                output += c;
+                break;
+        }
+    }
+    return output;
+}
+
+std::string UnescapeJson(std::string const& input)
+{
+    std::string output;
+    output.reserve(input.size());
+    for (size_t i = 0; i < input.size(); ++i)
+    {
+        if (input[i] != '\\' || i + 1 >= input.size())
+        {
+            output += input[i];
+            continue;
+        }
+
+        char const next = input[++i];
+        switch (next)
+        {
+            case '\"':
+                output += '\"';
+                break;
+            case '\\':
+                output += '\\';
+                break;
+            case '/':
+                output += '/';
+                break;
+            case 'b':
+                output += '\b';
+                break;
+            case 'f':
+                output += '\f';
+                break;
+            case 'n':
+                output += '\n';
+                break;
+            case 'r':
+                output += '\r';
+                break;
+            case 't':
+                output += '\t';
+                break;
+            case 'u':
+                output += '?';
+                i += std::min<size_t>(4, input.size() - i - 1);
+                break;
+            default:
+                output += next;
+                break;
+        }
+    }
+
+    return output;
+}
+
+bool ParseEndpoint(std::string const& endpoint, ParsedEndpoint& parsed)
+{
+    static std::regex endpointRegex(R"(^(https?)://([^/:?#]+)(?::([0-9]+))?([^?#]*)?.*$)", std::regex::icase);
+    std::smatch matches;
+    if (!std::regex_match(endpoint, matches, endpointRegex))
+        return false;
+
+    std::string scheme = matches[1].str();
+    std::transform(scheme.begin(), scheme.end(), scheme.begin(), [](unsigned char c) { return std::tolower(c); });
+
+    parsed.secure = (scheme == "https");
+    parsed.host = matches[2].str();
+    parsed.port = matches[3].matched ? matches[3].str() : (parsed.secure ? "443" : "80");
+    parsed.target = matches[4].matched && !matches[4].str().empty() ? matches[4].str() : "/";
+    return true;
+}
+
+std::string ExtractReplyContent(std::string const& responseBody)
+{
+    std::smatch matches;
+
+    static std::regex outputTextRegex(R"REGEX("output_text"\s*:\s*"((?:\\.|[^"\\])*)")REGEX");
+    if (std::regex_search(responseBody, matches, outputTextRegex))
+        return UnescapeJson(matches[1].str());
+
+    size_t contentOffset = responseBody.find("\"choices\"");
+    std::string body = contentOffset == std::string::npos ? responseBody : responseBody.substr(contentOffset);
+
+    static std::regex messageContentRegex(R"REGEX("content"\s*:\s*"((?:\\.|[^"\\])*)")REGEX");
+    if (std::regex_search(body, matches, messageContentRegex))
+        return UnescapeJson(matches[1].str());
+
+    static std::regex textRegex(R"REGEX("text"\s*:\s*"((?:\\.|[^"\\])*)")REGEX");
+    if (std::regex_search(body, matches, textRegex))
+        return UnescapeJson(matches[1].str());
+
+    return "";
+}
+
+std::string TrimWhitespace(std::string value)
+{
+    auto notSpace = [](unsigned char c) { return !std::isspace(c); };
+    auto begin = std::find_if(value.begin(), value.end(), notSpace);
+    if (begin == value.end())
+        return "";
+
+    auto end = std::find_if(value.rbegin(), value.rend(), notSpace).base();
+    return std::string(begin, end);
+}
+
+std::string NormalizeReply(std::string replyText, uint32 maxReplyChars)
+{
+    for (char& c : replyText)
+    {
+        if (c == '\r' || c == '\n' || c == '\t')
+            c = ' ';
+    }
+
+    replyText = TrimWhitespace(replyText);
+    if (replyText.size() > maxReplyChars)
+        replyText.resize(maxReplyChars);
+
+    if (replyText.size() > 255)
+        replyText.resize(255);
+
+    return replyText;
+}
+
+std::optional<std::string> PostJsonRequest(std::string const& endpointUrl, std::string const& payload,
+                                           std::string const& apiKey, uint32 timeoutMs)
+{
+    ParsedEndpoint endpoint;
+    if (!ParseEndpoint(endpointUrl, endpoint))
+    {
+        LOG_ERROR("playerbots", "Invalid GPT endpoint URL: {}", endpointUrl);
+        return std::nullopt;
+    }
+
+    namespace beast = boost::beast;
+    namespace http = beast::http;
+    namespace net = boost::asio;
+    namespace ssl = net::ssl;
+    using tcp = net::ip::tcp;
+
+    try
+    {
+        net::io_context ioc;
+        tcp::resolver resolver(ioc);
+        auto const results = resolver.resolve(endpoint.host, endpoint.port);
+        auto const timeout = std::chrono::milliseconds(std::max<uint32>(timeoutMs, 100));
+
+        if (endpoint.secure)
+        {
+            ssl::context sslCtx(ssl::context::tls_client);
+            sslCtx.set_default_verify_paths();
+            sslCtx.set_verify_mode(ssl::verify_none);
+
+            beast::ssl_stream<beast::tcp_stream> stream(ioc, sslCtx);
+
+            if (!SSL_set_tlsext_host_name(stream.native_handle(), endpoint.host.c_str()))
+            {
+                LOG_ERROR("playerbots", "Failed to set SNI host for GPT endpoint");
+                return std::nullopt;
+            }
+
+            beast::get_lowest_layer(stream).expires_after(timeout);
+            beast::get_lowest_layer(stream).connect(results);
+            stream.handshake(ssl::stream_base::client);
+
+            http::request<http::string_body> request(http::verb::post, endpoint.target, 11);
+            request.set(http::field::host, endpoint.host);
+            request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+            request.set(http::field::content_type, "application/json");
+            if (!apiKey.empty())
+                request.set(http::field::authorization, "Bearer " + apiKey);
+            request.body() = payload;
+            request.prepare_payload();
+
+            http::write(stream, request);
+
+            beast::flat_buffer buffer;
+            http::response<http::string_body> response;
+            http::read(stream, buffer, response);
+
+            beast::error_code ec;
+            stream.shutdown(ec);
+            if (ec == net::error::eof || ec == ssl::error::stream_truncated)
+                ec = {};
+            if (ec)
+                return std::nullopt;
+
+            if (response.result_int() < 200 || response.result_int() >= 300)
+            {
+                LOG_WARN("playerbots", "GPT endpoint returned status {}", response.result_int());
+                return std::nullopt;
+            }
+
+            return response.body();
+        }
+
+        beast::tcp_stream stream(ioc);
+        stream.expires_after(timeout);
+        stream.connect(results);
+
+        http::request<http::string_body> request(http::verb::post, endpoint.target, 11);
+        request.set(http::field::host, endpoint.host);
+        request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+        request.set(http::field::content_type, "application/json");
+        if (!apiKey.empty())
+            request.set(http::field::authorization, "Bearer " + apiKey);
+        request.body() = payload;
+        request.prepare_payload();
+
+        http::write(stream, request);
+
+        beast::flat_buffer buffer;
+        http::response<http::string_body> response;
+        http::read(stream, buffer, response);
+
+        if (response.result_int() < 200 || response.result_int() >= 300)
+        {
+            LOG_WARN("playerbots", "GPT endpoint returned status {}", response.result_int());
+            return std::nullopt;
+        }
+
+        return response.body();
+    }
+    catch (std::exception const& e)
+    {
+        LOG_WARN("playerbots", "GPT request failed: {}", e.what());
+    }
+
+    return std::nullopt;
+}
+
+std::optional<std::string> TryGenerateGptReply(Player* bot, std::string const& incomingMessage, std::string const& speakerName,
+                                               ChatChannelSource chatChannelSource)
+{
+    if (!sPlayerbotAIConfig.gptChatEnabled)
+        return std::nullopt;
+
+    if (sPlayerbotAIConfig.gptChatWhisperOnly && chatChannelSource != ChatChannelSource::SRC_WHISPER)
+        return std::nullopt;
+
+    if (sPlayerbotAIConfig.gptChatReplyChance < 100 && urand(1, 100) > sPlayerbotAIConfig.gptChatReplyChance)
+        return std::nullopt;
+
+    if (sPlayerbotAIConfig.gptChatEndpoint.empty() || sPlayerbotAIConfig.gptChatModel.empty())
+        return std::nullopt;
+
+    static std::mutex requestLock;
+    static time_t lastRequest = 0;
+
+    {
+        std::lock_guard<std::mutex> guard(requestLock);
+        if (sPlayerbotAIConfig.gptChatMinIntervalSec && time(nullptr) < (lastRequest + sPlayerbotAIConfig.gptChatMinIntervalSec))
+            return std::nullopt;
+
+        lastRequest = time(nullptr);
+    }
+
+    std::string trimmedMessage = incomingMessage;
+    uint32 maxPromptChars = std::max<uint32>(sPlayerbotAIConfig.gptChatMaxPromptChars, 32);
+    if (trimmedMessage.size() > maxPromptChars)
+        trimmedMessage.resize(maxPromptChars);
+
+    uint32 maxReplyChars = std::clamp<uint32>(sPlayerbotAIConfig.gptChatMaxReplyChars, 16, 255);
+    std::string systemPrompt = sPlayerbotAIConfig.gptChatSystemPrompt;
+    if (systemPrompt.empty())
+    {
+        systemPrompt =
+            "You are a friendly World of Warcraft Wrath of the Lich King player bot. Keep replies short, in-character, safe, and under 180 characters.";
+    }
+
+    std::ostringstream userPrompt;
+    userPrompt << "Bot name: " << bot->GetName() << ". Player name: " << speakerName
+               << ". Player says: " << trimmedMessage
+               << ". Reply with one short in-game sentence, no longer than " << maxReplyChars << " characters.";
+
+    std::ostringstream payload;
+    payload << "{\"model\":\"" << EscapeJson(sPlayerbotAIConfig.gptChatModel) << "\","
+            << "\"messages\":["
+            << "{\"role\":\"system\",\"content\":\"" << EscapeJson(systemPrompt) << "\"},"
+            << "{\"role\":\"user\",\"content\":\"" << EscapeJson(userPrompt.str()) << "\"}"
+            << "],"
+            << "\"max_tokens\":80}";
+
+    auto responseBody = PostJsonRequest(sPlayerbotAIConfig.gptChatEndpoint, payload.str(),
+                                        sPlayerbotAIConfig.gptChatApiKey, sPlayerbotAIConfig.gptChatTimeoutMs);
+    if (!responseBody)
+        return std::nullopt;
+
+    std::string reply = NormalizeReply(ExtractReplyContent(*responseBody), maxReplyChars);
+    if (reply.empty())
+        return std::nullopt;
+
+    return reply;
+}
+}
 
 SayAction::SayAction(PlayerbotAI* botAI) : Action(botAI, "say"), Qualified() {}
 
@@ -220,7 +576,7 @@ void ChatReplyAction::ChatReplyDo(Player* bot, uint32& type, uint32& guid1, uint
         return;
     }
 
-    auto messageRepy = GenerateReplyMessage(bot, msg, guid1, name);
+    auto messageRepy = GenerateReplyMessage(bot, msg, guid1, name, chatChannelSource);
     SendGeneralResponse(bot, chatChannelSource, messageRepy, name);
 }
 
@@ -575,11 +931,15 @@ bool ChatReplyAction::SendGeneralResponse(Player* bot, ChatChannelSource chatCha
     return true;
 }
 
-std::string ChatReplyAction::GenerateReplyMessage(Player* bot, std::string& incomingMessage, uint32& guid1, std::string& name)
+std::string ChatReplyAction::GenerateReplyMessage(Player* bot, std::string& incomingMessage, uint32& guid1, std::string& name,
+                                                  ChatChannelSource chatChannelSource)
 {
     ChatReplyType replyType = REPLY_NOT_UNDERSTAND; // default not understand
 
     std::string respondsText = "";
+
+    if (auto gptReply = TryGenerateGptReply(bot, incomingMessage, name, chatChannelSource))
+        return *gptReply;
 
     // Chat Logic
     int32 verb_pos = -1;

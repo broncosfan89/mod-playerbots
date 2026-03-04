@@ -1156,6 +1156,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(WorldPacket const& packet)
                     sCharacterCache->GetCharacterNameByGuid(guid1, name);
                     uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(guid1);
                     isFromFreeBot = sPlayerbotAIConfig.IsInRandomAccountList(accountId);
+                    bool isWhisper = (msgtype == CHAT_MSG_WHISPER);
                     bool isMentioned = message.find(bot->GetName()) != std::string::npos;
 
                     // ChatChannelSource chatChannelSource = GetChatChannelSource(bot, msgtype, chanName);
@@ -1201,7 +1202,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(WorldPacket const& packet)
 
                         if (!isFromFreeBot)
                         {
-                            if (!isMentioned && urand(0, 4))
+                            if (!isWhisper && !isMentioned && urand(0, 4))
                                 return;
                         }
                         else

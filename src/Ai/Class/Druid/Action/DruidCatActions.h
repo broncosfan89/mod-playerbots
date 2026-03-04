@@ -81,7 +81,31 @@ public:
 class CastRipAction : public CastMeleeDebuffSpellAction
 {
 public:
-    CastRipAction(PlayerbotAI* botAI) : CastMeleeDebuffSpellAction(botAI, "rip", true, 12.0f) {}
+    CastRipAction(PlayerbotAI* botAI) : CastMeleeDebuffSpellAction(botAI, "rip", true, 1.0f) {}
+};
+
+class CastRipOnMeleeAttackersAction : public CastMeleeDebuffSpellAction
+{
+public:
+    CastRipOnMeleeAttackersAction(PlayerbotAI* botAI) : CastMeleeDebuffSpellAction(botAI, "rip", true, 1.0f) {}
+
+    Unit* GetTarget() override
+    {
+        Unit* comboTarget = bot->GetComboTarget();
+        if (comboTarget &&
+            comboTarget->IsAlive() &&
+            bot->GetComboTargetGUID() == comboTarget->GetGUID() &&
+            bot->GetComboPoints() > 0 &&
+            bot->IsWithinMeleeRange(comboTarget) &&
+            !botAI->HasAura("rip", comboTarget, true))
+        {
+            return comboTarget;
+        }
+
+        return CastMeleeDebuffSpellAction::GetTarget();
+    }
+
+    std::string const getName() override { return "rip on attacker"; }
 };
 
 class CastShredAction : public CastMeleeSpellAction

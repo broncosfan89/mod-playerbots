@@ -166,6 +166,7 @@ public:
         creators["holy fire"] = &PriestAiObjectContextInternal::holy_fire;
         creators["smite"] = &PriestAiObjectContextInternal::smite;
         creators["mind blast"] = &PriestAiObjectContextInternal::mind_blast;
+        creators["penance"] = &PriestAiObjectContextInternal::penance;
         creators["shadowform"] = &PriestAiObjectContextInternal::shadowform;
         creators["remove shadowform"] = &PriestAiObjectContextInternal::remove_shadowform;
         creators["holy nova"] = &PriestAiObjectContextInternal::holy_nova;
@@ -271,6 +272,7 @@ private:
     static Action* holy_fire(PlayerbotAI* botAI) { return new CastHolyFireAction(botAI); }
     static Action* smite(PlayerbotAI* botAI) { return new CastSmiteAction(botAI); }
     static Action* mind_blast(PlayerbotAI* botAI) { return new CastMindBlastAction(botAI); }
+    static Action* penance(PlayerbotAI* botAI) { return new CastPenanceAction(botAI); }
     static Action* shadowform(PlayerbotAI* botAI) { return new CastShadowformAction(botAI); }
     static Action* remove_shadowform(PlayerbotAI* botAI) { return new CastRemoveShadowformAction(botAI); }
     static Action* holy_nova(PlayerbotAI* botAI) { return new CastHolyNovaAction(botAI); }

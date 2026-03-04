@@ -234,6 +234,19 @@ bool PlayerbotAIConfig::Initialize()
     randomBotEmote = sConfigMgr->GetOption<bool>("AiPlayerbot.RandomBotEmote", false);
     randomBotSuggestDungeons = sConfigMgr->GetOption<bool>("AiPlayerbot.RandomBotSuggestDungeons", true);
     randomBotSayWithoutMaster = sConfigMgr->GetOption<bool>("AiPlayerbot.RandomBotSayWithoutMaster", false);
+    gptChatEnabled = sConfigMgr->GetOption<bool>("AiPlayerbot.GptChatEnabled", false);
+    gptChatWhisperOnly = sConfigMgr->GetOption<bool>("AiPlayerbot.GptChatWhisperOnly", true);
+    gptChatReplyChance = sConfigMgr->GetOption<uint32>("AiPlayerbot.GptChatReplyChance", 100);
+    gptChatTimeoutMs = sConfigMgr->GetOption<uint32>("AiPlayerbot.GptChatTimeoutMs", 3000);
+    gptChatMaxPromptChars = sConfigMgr->GetOption<uint32>("AiPlayerbot.GptChatMaxPromptChars", 220);
+    gptChatMaxReplyChars = sConfigMgr->GetOption<uint32>("AiPlayerbot.GptChatMaxReplyChars", 180);
+    gptChatMinIntervalSec = sConfigMgr->GetOption<uint32>("AiPlayerbot.GptChatMinIntervalSec", 2);
+    gptChatEndpoint = sConfigMgr->GetOption<std::string>("AiPlayerbot.GptChatEndpoint", "https://api.openai.com/v1/chat/completions");
+    gptChatApiKey = sConfigMgr->GetOption<std::string>("AiPlayerbot.GptChatApiKey", "", true);
+    gptChatModel = sConfigMgr->GetOption<std::string>("AiPlayerbot.GptChatModel", "gpt-4o-mini");
+    gptChatSystemPrompt = sConfigMgr->GetOption<std::string>(
+        "AiPlayerbot.GptChatSystemPrompt",
+        "You are a friendly World of Warcraft Wrath of the Lich King player bot. Keep replies short, in-character, safe, and under 180 characters.");
 
     // broadcastChanceMaxValue is used in urand(1, broadcastChanceMaxValue) for broadcasts,
     // lowering it will increase the chance, setting it to 0 will disable broadcasts

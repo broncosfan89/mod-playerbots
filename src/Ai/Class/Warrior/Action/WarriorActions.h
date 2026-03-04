@@ -45,7 +45,13 @@ BUFF_ACTION(CastCommandingShoutAction, "commanding shout");
 
 // arms
 MELEE_ACTION(CastHeroicStrikeAction, "heroic strike");
-REACH_ACTION(CastChargeAction, "charge", 8.0f);
+class CastChargeAction : public CastReachTargetSpellAction
+{
+public:
+    CastChargeAction(PlayerbotAI* botAI) : CastReachTargetSpellAction(botAI, "charge", 8.0f) {}
+    bool isUseful() override;
+};
+
 DEBUFF_CHECKISOWNER_ACTION(CastRendAction, "rend");
 // DEBUFF_ENEMY_ACTION(CastRendOnAttackerAction, "rend");
 

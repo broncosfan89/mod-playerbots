@@ -51,10 +51,10 @@ AfflictionWarlockStrategy::AfflictionWarlockStrategy(PlayerbotAI* botAI) : Gener
 std::vector<NextAction> AfflictionWarlockStrategy::getDefaultActions()
 {
     return {
+       NextAction("shadow bolt", 5.8f),
        NextAction("corruption", 5.5f),
        NextAction("unstable affliction", 5.4f),
        NextAction("haunt", 5.3f),
-       NextAction("shadow bolt", 5.2f),
        NextAction("shoot", 5.0f)
     };
 }
@@ -101,7 +101,7 @@ void AfflictionWarlockStrategy::InitTriggers(std::vector<TriggerNode*>& triggers
         new TriggerNode(
             "haunt",
             {
-                NextAction("haunt", 16.5f)
+                NextAction("haunt", 20.5f)
             }
         )
     );
@@ -112,6 +112,14 @@ void AfflictionWarlockStrategy::InitTriggers(std::vector<TriggerNode*>& triggers
             "shadow trance",
             {
                 NextAction("shadow bolt", 16.0f)
+            }
+        )
+    );
+    triggers.push_back(
+        new TriggerNode(
+            "backlash",
+            {
+                NextAction("shadow bolt", 20.0f)
             }
         )
     );

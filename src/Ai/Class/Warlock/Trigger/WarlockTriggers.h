@@ -219,10 +219,16 @@ public:
     bool IsActive() override { return BuffTrigger::IsActive(); }
 };
 
-class HauntTrigger : public DebuffTrigger
+class HauntTrigger : public SpellCanBeCastTrigger
 {
 public:
-    HauntTrigger(PlayerbotAI* ai) : DebuffTrigger(ai, "haunt", 1, true, 0) {}
+    HauntTrigger(PlayerbotAI* ai) : SpellCanBeCastTrigger(ai, "haunt") {}
+};
+
+class ChaosBoltTrigger : public SpellCanBeCastTrigger
+{
+public:
+    ChaosBoltTrigger(PlayerbotAI* ai) : SpellCanBeCastTrigger(ai, "chaos bolt") {}
 };
 
 class CurseOfAgonyTrigger : public DebuffTrigger

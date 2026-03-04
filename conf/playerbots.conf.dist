@@ -2010,6 +2010,29 @@ AiPlayerbot.GuildRepliesRate = 100
 # Bots without a master will say their lines
 AiPlayerbot.RandomBotSayWithoutMaster = 0
 
+# Enable GPT-backed chat replies (0/1). Falls back to built-in replies on error.
+AiPlayerbot.GptChatEnabled = 0
+# Restrict GPT replies to whispers only (recommended for performance and spam control)
+AiPlayerbot.GptChatWhisperOnly = 1
+# Chance (0-100) that an eligible message uses GPT
+AiPlayerbot.GptChatReplyChance = 100
+# Minimum delay between GPT requests, globally in seconds
+AiPlayerbot.GptChatMinIntervalSec = 2
+# GPT request timeout in milliseconds
+AiPlayerbot.GptChatTimeoutMs = 3000
+# Max incoming message length sent to GPT
+AiPlayerbot.GptChatMaxPromptChars = 220
+# Max GPT reply length before truncation (hard game limit is 255)
+AiPlayerbot.GptChatMaxReplyChars = 180
+# GPT chat completions endpoint
+AiPlayerbot.GptChatEndpoint = "https://api.openai.com/v1/chat/completions"
+# GPT model name
+AiPlayerbot.GptChatModel = "gpt-4o-mini"
+# API key used for Authorization: Bearer <key>. Leave empty if your endpoint does not require it.
+AiPlayerbot.GptChatApiKey = ""
+# Optional system prompt override
+AiPlayerbot.GptChatSystemPrompt = "You are a friendly World of Warcraft Wrath of the Lich King player bot. Keep replies short, in-character, safe, and under 180 characters."
+
 #
 #
 #

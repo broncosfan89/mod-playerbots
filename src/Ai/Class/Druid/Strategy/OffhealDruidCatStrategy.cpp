@@ -18,6 +18,7 @@ public:
         creators["shred"] = &shred;
         creators["rake"] = &rake;
         creators["rip"] = &rip;
+        creators["rip on attacker"] = &rip_on_attacker;
         creators["ferocious bite"] = &ferocious_bite;
         creators["savage roar"] = &savage_roar;
         creators["faerie fire (feral)"] = &faerie_fire_feral;
@@ -73,6 +74,16 @@ private:
             "rip",
             /*P*/ {},
             /*A*/ {},
+            /*C*/ {}
+        );
+    }
+
+    static ActionNode* rip_on_attacker([[maybe_unused]] PlayerbotAI* botAI)
+    {
+        return new ActionNode(
+            "rip on attacker",
+            /*P*/ {},
+            /*A*/ { NextAction("rip") },
             /*C*/ {}
         );
     }
@@ -176,9 +187,9 @@ void OffhealDruidCatStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
     );
     triggers.push_back(
         new TriggerNode(
-            "combo points available",
+            "rip combo points available",
             {
-                NextAction("rip", ACTION_HIGH + 6)
+                NextAction("rip", ACTION_HIGH + 8)
             }
         )
     );
@@ -249,9 +260,25 @@ void OffhealDruidCatStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
     );
     triggers.push_back(
         new TriggerNode(
+            "rip combo points and medium aoe",
+            {
+                NextAction("rip on attacker", ACTION_HIGH + 4)
+            }
+        )
+    );
+    triggers.push_back(
+        new TriggerNode(
             "medium aoe",
             {
                 NextAction("swipe (cat)", ACTION_HIGH + 3)
+            }
+        )
+    );
+    triggers.push_back(
+        new TriggerNode(
+            "rip combo points and light aoe",
+            {
+                NextAction("rip on attacker", ACTION_HIGH + 3)
             }
         )
     );

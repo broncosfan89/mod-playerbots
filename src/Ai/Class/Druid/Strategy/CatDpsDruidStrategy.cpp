@@ -21,6 +21,7 @@ public:
         creators["rake"] = &rake;
         creators["ferocious bite"] = &ferocious_bite;
         creators["rip"] = &rip;
+        creators["rip on attacker"] = &rip_on_attacker;
         creators["pounce"] = &pounce;
         creators["ravage"] = &ravage;
     }
@@ -112,6 +113,16 @@ private:
             "rip",
             /*P*/ {},
             /*A*/ {},
+            /*C*/ {}
+        );
+    }
+
+    static ActionNode* rip_on_attacker([[maybe_unused]] PlayerbotAI* botAI)
+    {
+        return new ActionNode(
+            "rip on attacker",
+            /*P*/ {},
+            /*A*/ { NextAction("rip") },
             /*C*/ {}
         );
     }
@@ -228,9 +239,9 @@ void CatDpsDruidStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
     );
     triggers.push_back(
         new TriggerNode(
-            "combo points available",
+            "rip combo points available",
             {
-                NextAction("rip", ACTION_HIGH + 6)
+                NextAction("rip", ACTION_HIGH + 8)
             }
         )
     );
@@ -278,9 +289,25 @@ void CatDpsDruidStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
     // AOE
     triggers.push_back(
         new TriggerNode(
+            "rip combo points and medium aoe",
+            {
+                NextAction("rip on attacker", ACTION_HIGH + 4)
+            }
+        )
+    );
+    triggers.push_back(
+        new TriggerNode(
             "medium aoe",
             {
                 NextAction("swipe (cat)", ACTION_HIGH + 3)
+            }
+        )
+    );
+    triggers.push_back(
+        new TriggerNode(
+            "rip combo points and light aoe",
+            {
+                NextAction("rip on attacker", ACTION_HIGH + 3)
             }
         )
     );

@@ -16,6 +16,7 @@ ShadowPriestStrategy::ShadowPriestStrategy(PlayerbotAI* botAI) : GenericPriestSt
 std::vector<NextAction> ShadowPriestStrategy::getDefaultActions()
 {
     return {
+        NextAction("penance", ACTION_DEFAULT + 0.4f),
         NextAction("mind blast", ACTION_DEFAULT + 0.3f),
         NextAction("mind flay", ACTION_DEFAULT + 0.2f),
         NextAction("shadow word: death", ACTION_DEFAULT + 0.1f), // cast during movement

@@ -6,6 +6,43 @@
 #include "WarriorActions.h"
 
 #include "Playerbots.h"
+#include "ServerFacade.h"
+
+bool CastChargeAction::isUseful()
+{
+    if (!CastReachTargetSpellAction::isUseful())
+        return false;
+
+    Unit* target = GetTarget();
+    if (!target || !bot->GetMap() || !bot->GetMap()->IsDungeon() || !botAI->IsTank(bot))
+        return true;
+
+    // In dungeons, avoid charging untouched packs that are likely to pull extras.
+    if (!target->IsInCombat())
+    {
+        GuidVector possibleTargets = AI_VALUE(GuidVector, "possible targets");
+        uint8 nearbyHostiles = 0;
+        for (ObjectGuid const& guid : possibleTargets)
+        {
+            Unit* unit = botAI->GetUnit(guid);
+            if (!unit || unit == target || !unit->IsAlive() || unit->IsPlayer() || !bot->IsHostileTo(unit))
+                continue;
+
+            if (ServerFacade::instance().IsDistanceLessOrEqualThan(
+                    ServerFacade::instance().GetDistance2d(unit, target),
+                    sPlayerbotAIConfig.aggroDistance))
+            {
+                if (++nearbyHostiles >= 2)
+                    return false;
+            }
+        }
+
+        if (AI_VALUE(bool, "possible adds"))
+            return false;
+    }
+
+    return true;
+}
 
 bool CastSunderArmorAction::isUseful()
 {

@@ -120,5 +120,8 @@ void ShamanHealerDpsStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
 
     triggers.push_back(
         new TriggerNode("medium aoe and healer should attack",
-                        { NextAction("chain lightning", ACTION_DEFAULT + 0.3f) }));
+                        {
+                            NextAction("chain lightning", ACTION_DEFAULT + 0.3f),
+                            NextAction("lava burst", ACTION_DEFAULT + 0.2f)
+                        }));
 }

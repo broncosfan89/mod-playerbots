@@ -17,6 +17,7 @@ public:
     ShadowPriestStrategyActionNodeFactory()
     {
         creators["mind blast"] = &mind_blast;
+        creators["penance"] = &penance;
         creators["dispersion"] = &dispersion;
         creators["mind flay"] = &mind_flay;
         creators["smite"] = &smite;
@@ -36,6 +37,14 @@ private:
         return new ActionNode("mind flay",
                               /*P*/ {},
                               /*A*/ { NextAction("smite") },
+                              /*C*/ {});
+    }
+
+    static ActionNode* penance([[maybe_unused]] PlayerbotAI* botAI)
+    {
+        return new ActionNode("penance",
+                              /*P*/ {},
+                              /*A*/ { NextAction("mind blast") },
                               /*C*/ {});
     }
 

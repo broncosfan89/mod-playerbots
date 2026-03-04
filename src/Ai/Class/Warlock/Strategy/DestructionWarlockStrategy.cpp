@@ -55,12 +55,12 @@ DestructionWarlockStrategy::DestructionWarlockStrategy(PlayerbotAI* botAI) : Gen
 std::vector<NextAction> DestructionWarlockStrategy::getDefaultActions()
 {
     return {
+       NextAction("shadow bolt", 5.95f),
        NextAction("immolate", 5.9f),
        NextAction("conflagrate", 5.8f),
        NextAction("chaos bolt", 5.7f),
        NextAction("incinerate", 5.6f),
-       NextAction("corruption", 5.3f),      // Note: Corruption and Shadow Bolt won't be used after the character learns Incinerate at level 64
-       NextAction("shadow bolt", 5.2f),
+       NextAction("corruption", 5.3f),
        NextAction("shoot", 5.0f)
     };
 }
@@ -92,6 +92,14 @@ void DestructionWarlockStrategy::InitTriggers(std::vector<TriggerNode*>& trigger
             "chaos bolt",
             {
                 NextAction("chaos bolt", 19.0f)
+            }
+        )
+    );
+    triggers.push_back(
+        new TriggerNode(
+            "backlash",
+            {
+                NextAction("shadow bolt", 20.0f)
             }
         )
     );

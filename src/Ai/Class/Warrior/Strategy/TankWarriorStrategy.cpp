@@ -135,8 +135,8 @@ TankWarriorStrategy::TankWarriorStrategy(PlayerbotAI* botAI) : GenericWarriorStr
 std::vector<NextAction> TankWarriorStrategy::getDefaultActions()
 {
     return {
+        NextAction("revenge", ACTION_DEFAULT + 0.5f),
         NextAction("devastate", ACTION_DEFAULT + 0.3f),
-        NextAction("revenge", ACTION_DEFAULT + 0.2f),
         NextAction("demoralizing shout", ACTION_DEFAULT + 0.1f),
         NextAction("melee", ACTION_DEFAULT)
     };
@@ -217,7 +217,7 @@ void TankWarriorStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
         new TriggerNode(
             "shield block",
             {
-                NextAction("shield block", ACTION_INTERRUPT + 1)
+                NextAction("shield block", ACTION_HIGH + 4)
             }
         )
     );
@@ -225,7 +225,7 @@ void TankWarriorStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
         new TriggerNode(
             "revenge",
             {
-                NextAction("revenge", ACTION_HIGH + 2)
+                NextAction("revenge", ACTION_INTERRUPT + 3)
             }
         )
     );

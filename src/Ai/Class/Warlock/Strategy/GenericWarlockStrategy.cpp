@@ -12,6 +12,8 @@ class GenericWarlockStrategyActionNodeFactory : public NamedObjectFactory<Action
 public:
     GenericWarlockStrategyActionNodeFactory()
     {
+        creators["haunt"] = &haunt;
+        creators["chaos bolt"] = &chaos_bolt;
         creators["banish on cc"] = &banish_on_cc;
         creators["fear on cc"] = &fear_on_cc;
         creators["spell lock"] = &spell_lock;
@@ -20,6 +22,8 @@ public:
     }
 
 private:
+    static ActionNode* haunt(PlayerbotAI*) { return new ActionNode("haunt", {}, {}, {}); }
+    static ActionNode* chaos_bolt(PlayerbotAI*) { return new ActionNode("chaos bolt", {}, {}, {}); }
     static ActionNode* banish_on_cc(PlayerbotAI*) { return new ActionNode("banish on cc", {}, {}, {}); }
     static ActionNode* fear_on_cc(PlayerbotAI*) { return new ActionNode("fear on cc", {}, {}, {}); }
     static ActionNode* spell_lock(PlayerbotAI*) { return new ActionNode("spell lock", {}, {}, {}); }
@@ -67,6 +71,30 @@ void GenericWarlockStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
     );
     triggers.push_back(
         new TriggerNode(
+            "haunt",
+            {
+                NextAction("haunt", 18.0f)
+            }
+        )
+    );
+    triggers.push_back(
+        new TriggerNode(
+            "chaos bolt",
+            {
+                NextAction("chaos bolt", 17.5f)
+            }
+        )
+    );
+    triggers.push_back(
+        new TriggerNode(
+            "medium aoe",
+            {
+                NextAction("shadow bolt", 16.5f)
+            }
+        )
+    );
+    triggers.push_back(
+        new TriggerNode(
             "no soul shard",
             {
                 NextAction("create soul shard", 60.0f)
@@ -109,10 +137,11 @@ void AoEWarlockStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
             {
                 NextAction("immolation aura", 26.0f),
                 NextAction("shadowfury", 23.0f),
+                NextAction("rain of fire", 22.75f),
                 NextAction("shadowflame", 22.5f),
                 NextAction("seed of corruption on attacker", 22.0f),
                 NextAction("seed of corruption", 21.5f),
-                NextAction("rain of fire", 21.0f)
+                NextAction("shadow bolt", 21.0f)
             }
         )
     );

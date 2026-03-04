@@ -111,6 +111,9 @@ public:
         creators["eclipse (lunar) cooldown"] = &DruidTriggerFactoryInternal::eclipse_lunar_cooldown;
         creators["mangle (cat)"] = &DruidTriggerFactoryInternal::mangle_cat;
         creators["ferocious bite time"] = &DruidTriggerFactoryInternal::ferocious_bite_time;
+        creators["rip combo points available"] = &DruidTriggerFactoryInternal::rip_combo_points_available;
+        creators["rip combo points and light aoe"] = &DruidTriggerFactoryInternal::rip_combo_points_and_light_aoe;
+        creators["rip combo points and medium aoe"] = &DruidTriggerFactoryInternal::rip_combo_points_and_medium_aoe;
         creators["hurricane channel check"] = &DruidTriggerFactoryInternal::hurricane_channel_check;
     }
 
@@ -148,6 +151,15 @@ private:
     static Trigger* eclipse_lunar_cooldown(PlayerbotAI* ai) { return new EclipseLunarCooldownTrigger(ai); }
     static Trigger* mangle_cat(PlayerbotAI* ai) { return new MangleCatTrigger(ai); }
     static Trigger* ferocious_bite_time(PlayerbotAI* ai) { return new FerociousBiteTimeTrigger(ai); }
+    static Trigger* rip_combo_points_available(PlayerbotAI* ai) { return new ComboPointsAvailableTrigger(ai, 1); }
+    static Trigger* rip_combo_points_and_light_aoe(PlayerbotAI* ai)
+    {
+        return new TwoTriggers(ai, "rip combo points available", "light aoe");
+    }
+    static Trigger* rip_combo_points_and_medium_aoe(PlayerbotAI* ai)
+    {
+        return new TwoTriggers(ai, "rip combo points available", "medium aoe");
+    }
     static Trigger* hurricane_channel_check(PlayerbotAI* ai) { return new HurricaneChannelCheckTrigger(ai); }
 };
 
@@ -192,6 +204,7 @@ public:
         creators["swipe (cat)"] = &DruidAiObjectContextInternal::swipe_cat;
         creators["rake"] = &DruidAiObjectContextInternal::rake;
         creators["rake on attacker"] = &DruidAiObjectContextInternal::rake_on_attacker;
+        creators["rip on attacker"] = &DruidAiObjectContextInternal::rip_on_attacker;
         creators["ferocious bite"] = &DruidAiObjectContextInternal::ferocious_bite;
         creators["rip"] = &DruidAiObjectContextInternal::rip;
         creators["cower"] = &DruidAiObjectContextInternal::cower;
@@ -280,6 +293,7 @@ private:
     static Action* swipe_cat(PlayerbotAI* botAI) { return new CastSwipeCatAction(botAI); }
     static Action* rake(PlayerbotAI* botAI) { return new CastRakeAction(botAI); }
     static Action* rake_on_attacker(PlayerbotAI* botAI) { return new CastRakeOnMeleeAttackersAction(botAI); }
+    static Action* rip_on_attacker(PlayerbotAI* botAI) { return new CastRipOnMeleeAttackersAction(botAI); }
     static Action* ferocious_bite(PlayerbotAI* botAI) { return new CastFerociousBiteAction(botAI); }
     static Action* rip(PlayerbotAI* botAI) { return new CastRipAction(botAI); }
     static Action* cower(PlayerbotAI* botAI) { return new CastCowerAction(botAI); }

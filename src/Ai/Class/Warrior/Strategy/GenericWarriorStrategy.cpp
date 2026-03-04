@@ -17,6 +17,10 @@ void GenericWarriorStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
     CombatStrategy::InitTriggers(triggers);
     triggers.push_back(new TriggerNode(
         "enemy out of melee", { NextAction("reach melee", ACTION_HIGH + 1) }));
+    triggers.push_back(new TriggerNode(
+        "light aoe", { NextAction("thunder clap", ACTION_HIGH + 4) }));
+    triggers.push_back(new TriggerNode(
+        "revenge", { NextAction("revenge", ACTION_INTERRUPT + 2) }));
 }
 
 class WarrirorAoeStrategyActionNodeFactory : public NamedObjectFactory<ActionNode>
